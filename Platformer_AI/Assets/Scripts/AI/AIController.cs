@@ -12,7 +12,7 @@ public class AIController : MonoBehaviour
     public Tilemap tilemap;    
     public BoundsInt area;
     public Camera camera;
-    private int[,] current_tiles = new int[31, 17];
+    private int[] current_tiles = new int[527];
     //31 x 17
     // Start is called before the first frame update
     void Start()
@@ -29,10 +29,43 @@ public class AIController : MonoBehaviour
 
         //area = cameraBounds.size;
 
+
+        foreach (var position in tilemap.cellBounds.allPositionsWithin)
+        {
+            if (tilemap.HasTile(position))
+            {
+                if (tilemap.GetTile(position).name == "TileGround")
+                {
+                    print(position);
+                }
+            }
+
+            // Tile is not empty; do stuff
+        }
+
         for (int index = 0; index < tileArray.Length; index++)
         {
-            print(tileArray[index]);
+            //print(tileArray[index]);
+            if (tileArray[index] != null)
+            {
+                current_tiles[index] = tileArray[index].name == "TileGround" || tileArray[index].name == "TileWall" ? 1 : 0;
+                if (current_tiles[index] == 1)
+                {
+                    //print(((Tile)tileArray[index]).GetTileData());
+                }
+            }
         }
+        print(current_tiles);
+
+        /*for (int index = 0; index < tileArray.Length; index++)
+        {
+            if (current_tiles[index] == 1)
+            {
+                print("x: "+  index%31);
+                print("y: " + index / 31);
+
+            }
+        }*/
         //BoundsInt bounds = tilemap.cellBounds;
         //TileBase[] allTiles = tilemap.GetTilesBlock(bounds);
         //Debug.Log(bounds.zMin);
@@ -51,17 +84,17 @@ public class AIController : MonoBehaviour
                 }
             }
         }*/
-    
 
 
 
-}
+
+    }
 
     // Update is called once per frame
     void FixedUpdate()
     {
         player_controller.move = Vector2.right;
-        
+
         Vector3 bottomLeft = getBottomLeft(10.0f);
         Vector3 topRight = getTopRight(10.0f);
         int sizeY = (int)Mathf.Abs(topRight.y - bottomLeft.y);
@@ -74,8 +107,27 @@ public class AIController : MonoBehaviour
 
         for (int index = 0; index < tileArray.Length; index++)
         {
-            print(tileArray[index]);
+            //print(tileArray[index]);
+            if (tileArray[index]!= null) { 
+                current_tiles[index] = tileArray[index].name == "TileGround" || tileArray[index].name == "TileWall" ? 1 : 0;
+            }
         }
+
+        /*for (int index = 0; index < tileArray.Length; index++)
+        {
+            if (current_tiles[index] == 1)
+            {
+                print("O");
+            }
+            else
+            {
+                print(" ");
+            }
+            if (index % 31 == 0)
+            {
+                print("\n");
+            }
+        }*/
     }
 
     public Vector3 getTopLeft(float distance)
