@@ -8,6 +8,8 @@ using UnityEngine.Tilemaps;
 public class AIController : MonoBehaviour
 {
     public GameObject player;
+    public Vector3 bottomLeftCheck;  
+    
     private PlayerController player_controller;
     public Tilemap tilemap;    
     public BoundsInt area;
@@ -19,140 +21,126 @@ public class AIController : MonoBehaviour
     {
         
         player_controller = player.GetComponent <PlayerController>();
-        Vector3 bottomLeft = getBottomLeft(10.0f);
-        Vector3 topRight = getTopRight(10.0f);
-        int sizeY = (int)Mathf.Abs(topRight.y - bottomLeft.y);
-        int sizeX = (int)Mathf.Abs(topRight.x - bottomLeft.x);
         
-        BoundsInt area = new BoundsInt((int)bottomLeft.x, (int)bottomLeft.y, 0, sizeX,sizeY,1);
-        TileBase[] tileArray = tilemap.GetTilesBlock(area);
+        bottomLeftCheck = camera.ViewportToWorldPoint(new Vector3(0, 0, camera.nearClipPlane));
+        
+
 
         //area = cameraBounds.size;
 
 
-        foreach (var position in tilemap.cellBounds.allPositionsWithin)
+        /*foreach (var position in tilemap.cellBounds.allPositionsWithin)
         {
+            
+            
             if (tilemap.HasTile(position))
             {
-                if (tilemap.GetTile(position).name == "TileGround")
+                
+                string tileName = tilemap.GetTile(position).name;
+                if (tileName == "TileGround" || tileName == "TileGroundTop" || tileName == "TileFloatingLeftEdge" || tileName == "TileFloatingMiddle" || tileName == "TileFloatingRightEdge")
                 {
-                    print(position);
+                    Vector3 worldCoord = tilemap.CellToWorld(position);
+                    if ((worldCoord.x > bottomLeft.x && worldCoord.y > bottomLeft.y) && (worldCoord.x < topRight.x && worldCoord.y < topRight.y))
+                    {
+                        //print(worldCoord + tileName);
+                        int iX = Mathf.RoundToInt((worldCoord.x - bottomLeft.x));
+                        int iY =Mathf.RoundToInt((worldCoord.y - bottomLeft.y)) ;
+                        current_tiles[iX*iY] = 1;
+                        
+                    }
+                    //print(position);
+                    
+
                 }
             }
-
+            
             // Tile is not empty; do stuff
         }
 
-        for (int index = 0; index < tileArray.Length; index++)
+        for (int i = 0; i < current_tiles.Length; ++i)
         {
-            //print(tileArray[index]);
-            if (tileArray[index] != null)
-            {
-                current_tiles[index] = tileArray[index].name == "TileGround" || tileArray[index].name == "TileWall" ? 1 : 0;
-                if (current_tiles[index] == 1)
-                {
-                    //print(((Tile)tileArray[index]).GetTileData());
-                }
-            }
-        }
-        print(current_tiles);
-
-        /*for (int index = 0; index < tileArray.Length; index++)
-        {
-            if (current_tiles[index] == 1)
-            {
-                print("x: "+  index%31);
-                print("y: " + index / 31);
-
-            }
-        }*/
-        //BoundsInt bounds = tilemap.cellBounds;
-        //TileBase[] allTiles = tilemap.GetTilesBlock(bounds);
-        //Debug.Log(bounds.zMin);
-        /*for (int x = 0; x < bounds.size.x; x++)
-        {
-            for (int y = 0; y < bounds.size.y; y++)
-            {
-                TileBase tile = allTiles[x + y * bounds.size.x];
-                if (tile != null)
-                {
-                    Debug.Log("x:" + x + " y:" + y + " tile:" + tile.name);
-                }
-                else
-                {
-                    Debug.Log("x:" + x + " y:" + y + " tile: (null)");
-                }
-            }
+            print(current_tiles[i]);
         }*/
 
 
 
 
     }
+    
 
     // Update is called once per frame
     void FixedUpdate()
     {
-        player_controller.move = Vector2.right;
 
-        Vector3 bottomLeft = getBottomLeft(10.0f);
-        Vector3 topRight = getTopRight(10.0f);
+        bool run = false;
+
+
+        
+        player_controller = player.GetComponent<PlayerController>();
+        player_controller.move = Vector2.right;
+        Vector3 bottomLeft = camera.ViewportToWorldPoint(new Vector3(0, 0, camera.nearClipPlane));
+        Vector3 topRight = camera.ViewportToWorldPoint(new Vector3(1, 1, camera.nearClipPlane));
         int sizeY = (int)Mathf.Abs(topRight.y - bottomLeft.y);
         int sizeX = (int)Mathf.Abs(topRight.x - bottomLeft.x);
-
+        print(bottomLeft);
+        print(bottomLeftCheck);
+        
         BoundsInt area = new BoundsInt((int)bottomLeft.x, (int)bottomLeft.y, 0, sizeX, sizeY, 1);
         TileBase[] tileArray = tilemap.GetTilesBlock(area);
 
         //area = cameraBounds.size;
 
-        for (int index = 0; index < tileArray.Length; index++)
-        {
-            //print(tileArray[index]);
-            if (tileArray[index]!= null) { 
-                current_tiles[index] = tileArray[index].name == "TileGround" || tileArray[index].name == "TileWall" ? 1 : 0;
+        if ((bottomLeftCheck - bottomLeft).magnitude > 0.5) {
+            print("inside");
+            bottomLeftCheck = bottomLeft;
+            
+
+            foreach (var position in tilemap.cellBounds.allPositionsWithin)
+            {
+
+
+                if (tilemap.HasTile(position))
+                {
+
+                    string tileName = tilemap.GetTile(position).name;
+                    if (tileName == "TileGround" || tileName == "TileGroundTop" || tileName == "TileFloatingLeftEdge" || tileName == "TileFloatingMiddle" || tileName == "TileFloatingRightEdge")
+                    {
+                        Vector3 worldCoord = tilemap.CellToWorld(position);
+                        if ((worldCoord.x > bottomLeft.x && worldCoord.y > bottomLeft.y) && (worldCoord.x < topRight.x && worldCoord.y < topRight.y))
+                        {
+                            //print(worldCoord + tileName);
+                            int iX = Mathf.RoundToInt((worldCoord.x - bottomLeft.x));
+                            int iY = Mathf.RoundToInt((worldCoord.y - bottomLeft.y));
+                            current_tiles[iX * iY] = 1;
+
+                        }
+
+                    }
+                }
+
+                
             }
+
+            /*for (int i = 0; i < current_tiles.Length; ++i)
+            {
+                print(current_tiles[i]);
+            }*/
         }
+        
 
-        /*for (int index = 0; index < tileArray.Length; index++)
-        {
-            if (current_tiles[index] == 1)
-            {
-                print("O");
-            }
-            else
-            {
-                print(" ");
-            }
-            if (index % 31 == 0)
-            {
-                print("\n");
-            }
-        }*/
+        
+        
+
+        
+
+        
+        
     }
 
-    public Vector3 getTopLeft(float distance)
-    {
-        float y = distance * Mathf.Tan(camera.fieldOfView * Mathf.Deg2Rad / 2);
-        float x = y * camera.aspect;
-        return this.transform.TransformPoint(new Vector3(-x, y, distance));
-    }
-    public Vector3 getTopRight(float distance)
-    {
-        float y = distance * Mathf.Tan(this.camera.fieldOfView * Mathf.Deg2Rad / 2);
-        float x = y * this.camera.aspect;
-        return new Vector3(x, y, distance);
-    }
-    public Vector3 getBottomLeft(float distance)
-    {
-        float y = distance * Mathf.Tan(camera.fieldOfView * Mathf.Deg2Rad / 2);
-        float x = y * camera.aspect;
-        return new Vector3(-x, -y, distance);
-    }
 
-    public Vector3 getBottomRight(float distance)
-    {
-        float y = distance * Mathf.Tan(camera.fieldOfView * Mathf.Deg2Rad / 2);
-        float x = y * camera.aspect;
-        return new Vector3(x, -y, distance);
-    }
+
+
+  
+
+   
 }
