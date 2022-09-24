@@ -11,7 +11,7 @@ public class AIController : MonoBehaviour
     public Vector3 bottomLeftCheck;  
     
     private PlayerController player_controller;
-    public Tilemap tilemap;    
+    //public Tilemap tilemap;    
     public BoundsInt area;
     public Camera camera;
     private int[] current_tiles = new int[527];
@@ -66,7 +66,7 @@ public class AIController : MonoBehaviour
 
 
     }
-    
+
 
     // Update is called once per frame
     void FixedUpdate()
@@ -75,25 +75,87 @@ public class AIController : MonoBehaviour
         bool run = false;
 
 
-        
+
         player_controller = player.GetComponent<PlayerController>();
-        player_controller.move = Vector2.right;
+        //player_controller.move = Vector2.right;
         Vector3 bottomLeft = camera.ViewportToWorldPoint(new Vector3(0, 0, camera.nearClipPlane));
         Vector3 topRight = camera.ViewportToWorldPoint(new Vector3(1, 1, camera.nearClipPlane));
+        
+        GameObject platform1 = FindClosestPlatform();
+        GameObject platform2 = FindSecondClosestPlatformToTheRight(platform1);
+
+        print("Platform 1: " + platform1.transform.position);
+        print("Platform 2: " + platform2.transform.position);
+
+       
+
+
+
+
+
+
+
+
+
+
+
+
+    }
+
+
+
+    public GameObject FindSecondClosestPlatformToTheRight(GameObject closest)
+    {
+        GameObject[] gos;
+        gos = GameObject.FindGameObjectsWithTag("Platform");
+        GameObject secondClosest = null;
+        float distance = Mathf.Infinity;
+        Vector3 position = player.transform.position;
+        foreach (GameObject go in gos)
+        {
+            Vector3 diff = go.transform.position - position;
+            float curDistance = diff.sqrMagnitude;
+            if (curDistance < distance && go.transform.position.x > closest.transform.position.x)
+            {
+                secondClosest = go;
+                distance = curDistance;
+            }
+        }
+        return secondClosest;
+    }
+
+    public GameObject FindClosestPlatform()
+    {
+        GameObject[] gos;
+        gos = GameObject.FindGameObjectsWithTag("Platform");
+        GameObject closest = null;
+        float distance = Mathf.Infinity;
+        Vector3 position = player.transform.position;
+        foreach (GameObject go in gos)
+        {
+            Vector3 diff = go.transform.position - position;
+            float curDistance = diff.sqrMagnitude;
+            if (curDistance < distance)
+            {
+                closest = go;
+                distance = curDistance;
+            }
+        }
+        return closest;
+    }
+
+
+    void GetTiles(Vector3 bottomLeft, Vector3 topRight, Tilemap tilemap)
+    {
         int sizeY = (int)Mathf.Abs(topRight.y - bottomLeft.y);
         int sizeX = (int)Mathf.Abs(topRight.x - bottomLeft.x);
-        print(bottomLeft);
-        print(bottomLeftCheck);
-        
         BoundsInt area = new BoundsInt((int)bottomLeft.x, (int)bottomLeft.y, 0, sizeX, sizeY, 1);
         TileBase[] tileArray = tilemap.GetTilesBlock(area);
-
-        //area = cameraBounds.size;
-
-        if ((bottomLeftCheck - bottomLeft).magnitude > 0.5) {
+        if ((bottomLeftCheck - bottomLeft).magnitude > 0.5)
+        {
             print("inside");
             bottomLeftCheck = bottomLeft;
-            
+
 
             foreach (var position in tilemap.cellBounds.allPositionsWithin)
             {
@@ -118,7 +180,7 @@ public class AIController : MonoBehaviour
                     }
                 }
 
-                
+
             }
 
             /*for (int i = 0; i < current_tiles.Length; ++i)
@@ -126,20 +188,7 @@ public class AIController : MonoBehaviour
                 print(current_tiles[i]);
             }*/
         }
-        
-
-        
-        
-
-        
-
-        
-        
     }
-
-
-
-
   
 
    
