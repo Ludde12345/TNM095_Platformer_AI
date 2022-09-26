@@ -1,21 +1,26 @@
+using GNN_AI;
 using Platformer.Mechanics;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Tilemaps;
+using static GNN_AI.GNN;
 
 namespace aicontroller
 { 
     public class AIController : MonoBehaviour
     {
         public GameObject player;
-        public Vector3 bottomLeftCheck;  
-    
+        public PlayerController playerController;
+        public Vector3 bottomLeftCheck;
+        private GNN net;
         private PlayerController player_controller;
         //public Tilemap tilemap;    
         public BoundsInt area;
         public Camera camera;
         private int[] current_tiles = new int[527];
+        private float prev_x = 0;
+        private float targetTime = 1.0f;
         //31 x 17
         // Start is called before the first frame update
         void Start()
@@ -24,7 +29,7 @@ namespace aicontroller
             player_controller = player.GetComponent <PlayerController>();
         
             bottomLeftCheck = camera.ViewportToWorldPoint(new Vector3(0, 0, camera.nearClipPlane));
-        
+
 
 
             //area = cameraBounds.size;
@@ -64,6 +69,14 @@ namespace aicontroller
             }*/
 
 
+            net = new GNN(this);
+             
+            net.createFirstGeneration();
+           
+             
+             
+            
+
 
 
         }
@@ -74,10 +87,18 @@ namespace aicontroller
         {
 
             bool run = false;
+            targetTime -= Time.deltaTime;
+            if (targetTime <= 0.0f)
+            {
+                if(player.transform.position.x == prev_x)
+                {
+                    Platformer.Gameplay.PlayerDeath.Execute() = true;
+                }
+                targetTime = 1.0f;
+                prev_x = player.transform.position.x;
+            }
 
 
-
-            player_controller = player.GetComponent<PlayerController>();
             //player_controller.move = Vector2.right;
             Vector3 bottomLeft = camera.ViewportToWorldPoint(new Vector3(0, 0, camera.nearClipPlane));
             Vector3 topRight = camera.ViewportToWorldPoint(new Vector3(1, 1, camera.nearClipPlane));
@@ -88,16 +109,35 @@ namespace aicontroller
             print("Platform 1: " + platform1.transform.position);
             print("Platform 2: " + platform2.transform.position);
 
-       
+            double[,] output = net.runForward();
+            if (playerController.won || playerController.dead)
+            {
+                net.breedNetworks();
+                playerController.won = false;
+                playerController.dead = false;
+            }
+
+            //print(output[0,0]);
+            print(output[0,1]);
+            //print(output[0,2]);
+
+            if (output[0,0] > 0.5 && player_controller.jumpState == PlayerController.JumpState.Grounded)
+            {
+                player_controller.jumpState = PlayerController.JumpState.PrepareToJump;
+            }
+
+            player_controller.move = Vector2.zero;
+
+            if (output[0,1] > 0.5) { 
+                player_controller.move = Vector2.right;
+            }
+            
+            if (output[0, 2] > 0.5) {
+                player_controller.move = Vector2.left;
+            }
 
 
-
-
-
-
-
-
-
+            print( "in ai controller: "+ player_controller.move);
 
 
 

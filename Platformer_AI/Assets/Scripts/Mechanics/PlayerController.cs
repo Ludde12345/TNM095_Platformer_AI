@@ -18,6 +18,8 @@ namespace Platformer.Mechanics
         public AudioClip respawnAudio;
         public AudioClip ouchAudio;
 
+        public bool won;
+        public bool dead;
         /// <summary>
         /// Max horizontal speed of the player.
         /// </summary>
@@ -32,7 +34,7 @@ namespace Platformer.Mechanics
         /*internal new*/ public Collider2D collider2d;
         /*internal new*/ public AudioSource audioSource;
         public Health health;
-        public bool controlEnabled = true;
+        public bool controlEnabled = false;
 
         bool jump;
         public Vector2 move;
@@ -55,18 +57,18 @@ namespace Platformer.Mechanics
         {
             if (controlEnabled)
             {
-                move.x = Input.GetAxis("Horizontal");
-                if (jumpState == JumpState.Grounded && Input.GetButtonDown("Jump"))
-                    jumpState = JumpState.PrepareToJump;
-                else if (Input.GetButtonUp("Jump"))
-                {
-                    //stopJump = true;
-                    Schedule<PlayerStopJump>().player = this;
-                }
+                //move.x = Input.GetAxis("Horizontal");
+                //if (jumpState == JumpState.Grounded && Input.GetButtonDown("Jump"))
+                //    jumpState = JumpState.PrepareToJump;
+                //else if (Input.GetButtonUp("Jump"))
+                //{
+                //    //stopJump = true;
+                //    Schedule<PlayerStopJump>().player = this;
+                //}
             }
             else
             {
-                move.x = 0;
+                //move.x = 0;
             }
             UpdateJumpState();
             base.Update();
@@ -125,7 +127,8 @@ namespace Platformer.Mechanics
 
             animator.SetBool("grounded", IsGrounded);
             animator.SetFloat("velocityX", Mathf.Abs(velocity.x) / maxSpeed);
-
+            print(move);
+            
             targetVelocity = move * maxSpeed;
         }
 

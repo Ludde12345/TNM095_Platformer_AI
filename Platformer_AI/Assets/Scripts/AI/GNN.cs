@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using aicontroller;
 using System.Linq;
+using System;
 
 namespace GNN_AI
 {
@@ -54,6 +55,24 @@ namespace GNN_AI
             inputSize = 4;
             hiddenSize = 3;//välj någon senare
             outputSize = 3;
+
+            for (int k = 0; k < POPULATION_SIZE; k++)
+            {
+                double[,] _weights1 = new double[inputSize, hiddenSize];
+
+                for (int i = 0; i < _weights1.GetLength(0); i++)
+                    for (int j = 0; j < _weights1.GetLength(1); j++)
+                        _weights1[i, j] = r.NextDouble() * 2 - 1;
+
+
+                double[,] _weights2 = new double[hiddenSize, outputSize];
+
+                for (int i = 0; i < _weights2.GetLength(0); i++)
+                    for (int j = 0; j < _weights2.GetLength(1); j++)
+                        _weights2[i, j] = r.NextDouble() * 2 - 1;
+
+                weightsList.Add(new WeightsInfo(_weights1, _weights2, 0));
+            }
         }
 
         
@@ -61,7 +80,7 @@ namespace GNN_AI
         float xDistFirstP, yDistFirstP, xDistNextP, yDistNextP = 0;
         // called by the game's update() method
         // returns: true if the bird should jump, false otherwise
-        public bool runForward()
+        public double[,] runForward()
         {
 
             Vector3[] vecArray = gameController.getRelativePos();
@@ -80,14 +99,14 @@ namespace GNN_AI
             input[0, 0] = (camWidth/2 + xDistFirstP)/camWidth;//normalized coordinates
             input[0, 1] = (camHeight / 2 + yDistFirstP) / camHeight; 
             input[0, 2] = (camWidth / 2 + xDistNextP) / camWidth;
-            input[0, 2] = (camHeight / 2 + yDistNextP) / camHeight;
+            input[0, 3] = (camHeight / 2 + yDistNextP) / camHeight;
 
             // computing the inputs & outputs for the hidden layer
             double[,] hiddenInputs = multiplyArrays(input, weightsList[crtIndex].weights1);//crtIndex used in src code
             double[,] hiddenOutputs = applySigmoid(hiddenInputs);
             // then the final output
             output = applySigmoid(multiplyArrays(hiddenOutputs, weightsList[crtIndex].weights2));
-            return output[0, 0] > 0.5;//[0,0] in our case??
+            return output;//[0,0] in our case??
         }
         void encode(WeightsInfo weightsInfo, List<double> gene)
         {
@@ -214,9 +233,11 @@ namespace GNN_AI
                 else
                     MUTATION_RATE = 0.05;
 
+                int iterations = 0;
                 // creating a new generation 
-                while (nextWeightsList.Count < POPULATION_SIZE)
+                while (nextWeightsList.Count < POPULATION_SIZE && iterations < 50)
                 {
+                    iterations++;
                     WeightsInfo w1 = select();
                     WeightsInfo w2 = select();
 
@@ -251,6 +272,7 @@ namespace GNN_AI
                     if (!nextWeightsList.Contains(w2))
                         nextWeightsList.Add(w2);
                 }
+                
 
                 weightsList.Clear();
                 nextWeightsList = nextWeightsList.OrderByDescending(wi => wi.fitness).ToList();
