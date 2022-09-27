@@ -25,6 +25,19 @@ namespace Platformer.Gameplay
             model.virtualCamera.m_Follow = player.transform;
             model.virtualCamera.m_LookAt = player.transform;
             Simulation.Schedule<EnablePlayerInput>(2f);
+            foreach (TokenInstance token in player.tokens)
+            {
+                token.gameObject.SetActive(true);
+                token.Reset();
+                token.collected = false;
+            }
+            foreach (PlatformInstance platform in player.hitPlatforms)
+            {
+                platform.hit = false;       
+            }
+            player.hitPlatforms.Clear();
+            player.tokens.Clear();
+
         }
     }
 }

@@ -54,7 +54,7 @@ namespace Platformer.Mechanics
                         if (token.collected && token.frame == token.sprites.Length - 1)
                         {
                             token.gameObject.SetActive(false);
-                            tokens[i] = null;
+                            //tokens[i] = null;
                         }
                         else
                         {

@@ -154,8 +154,8 @@ namespace aicontroller
             GameObject platform1 = FindClosestPlatform();
             GameObject platform2 = FindSecondClosestPlatformToTheRight(platform1);
 
-            print("Platform 1: " + platform1.transform.position);
-            print("Platform 2: " + platform2.transform.position);
+            //print("Platform 1: " + platform1.transform.position);
+            //print("Platform 2: " + platform2.transform.position);
 
             double[,] output = net.runForward(inNodesText, hiddenNodesText);
             if (playerController.won || playerController.dead)
@@ -185,7 +185,7 @@ namespace aicontroller
             }
 
 
-            print( "in ai controller: "+ player_controller.move);
+            //print( "in ai controller: "+ player_controller.move);
 
 
 

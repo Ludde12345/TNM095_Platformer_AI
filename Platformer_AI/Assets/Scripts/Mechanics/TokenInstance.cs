@@ -45,6 +45,14 @@ namespace Platformer.Mechanics
             if (player != null) OnPlayerEnter(player);
         }
 
+
+        public void Reset()
+        {
+            _renderer = GetComponent<SpriteRenderer>();
+            if (randomAnimationStartTime)
+                frame = Random.Range(0, sprites.Length);
+            sprites = idleAnimation;
+        }
         void OnPlayerEnter(PlayerController player)
         {
             if (collected) return;
@@ -52,7 +60,10 @@ namespace Platformer.Mechanics
             frame = 0;
             sprites = collectedAnimation;
             if (controller != null)
+            {
                 collected = true;
+                player.tokens.Add(this);
+            }
             //send an event into the gameplay system to perform some behaviour.
             var ev = Schedule<PlayerTokenCollision>();
             ev.token = this;

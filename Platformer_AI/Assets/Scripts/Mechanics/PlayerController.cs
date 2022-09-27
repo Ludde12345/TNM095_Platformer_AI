@@ -20,6 +20,8 @@ namespace Platformer.Mechanics
 
         public bool won;
         public bool dead;
+        public List<TokenInstance> tokens;
+        public List<PlatformInstance> hitPlatforms;
         /// <summary>
         /// Max horizontal speed of the player.
         /// </summary>
@@ -127,7 +129,7 @@ namespace Platformer.Mechanics
 
             animator.SetBool("grounded", IsGrounded);
             animator.SetFloat("velocityX", Mathf.Abs(velocity.x) / maxSpeed);
-            print(move);
+            //print(move);
             
             targetVelocity = move * maxSpeed;
         }

@@ -217,9 +217,11 @@ namespace GNN_AI
 
         public void breedNetworks()
         {
-            weightsList[crtIndex].fitness = gameController.player.transform.position.x;
+            weightsList[crtIndex].fitness = gameController.player.transform.position.x + gameController.playerController.hitPlatforms.Count*10;
             averageFitness += weightsList[crtIndex].fitness;
             maxFitness = maxFitness > weightsList[crtIndex].fitness ? maxFitness : weightsList[crtIndex].fitness;
+            Debug.Log("FITNESS: " + weightsList[crtIndex].fitness);
+
             if (crtIndex + 1 < weightsList.Count)
                 crtIndex++;
             else
@@ -233,7 +235,7 @@ namespace GNN_AI
 
                 weightsList = weightsList.OrderByDescending(wi => wi.fitness).ToList();
                 // starting with a large mutation rate so there's will be more solutions to choose from
-                if (weightsList[0].fitness < 2)
+                if (weightsList[0].fitness < 30)
                     MUTATION_RATE = 0.9;
                 else
                     MUTATION_RATE = 0.05;
