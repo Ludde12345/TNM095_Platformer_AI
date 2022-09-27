@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using Platformer.Gameplay;
 using UnityEngine;
+
 using static Platformer.Core.Simulation;
 
 namespace Platformer.Mechanics

@@ -5,6 +5,11 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Tilemaps;
 using static GNN_AI.GNN;
+using Platformer.Gameplay;
+
+using static Platformer.Core.Simulation;
+using Platformer.Model;
+using Platformer.Core;
 
 namespace aicontroller
 { 
@@ -85,18 +90,46 @@ namespace aicontroller
         // Update is called once per frame
         void FixedUpdate()
         {
-
-            bool run = false;
-            targetTime -= Time.deltaTime;
-            if (targetTime <= 0.0f)
-            {
+            PlatformerModel model = Simulation.GetModel<PlatformerModel>();
+            //var playerController = model.player;
+            playerController.dead = true;
+            
+            
+            //print(targetTime);
+            
                 if(player.transform.position.x == prev_x)
                 {
-                    Platformer.Gameplay.PlayerDeath.Execute() = true;
+                    targetTime -= Time.deltaTime;
+                    if(targetTime <= 0.0f) {
+                        if (playerController.health.IsAlive)
+                        {
+                            print("Player dead");
+                            playerController.health.Die();
+                            model.virtualCamera.m_Follow = null;
+                            model.virtualCamera.m_LookAt = null;
+                            // player.collider.enabled = false;
+                            playerController.controlEnabled = false;
+
+                            if (playerController.audioSource && playerController.ouchAudio)
+                                playerController.audioSource.PlayOneShot(playerController.ouchAudio);
+                            playerController.animator.SetTrigger("hurt");
+                            playerController.animator.SetBool("dead", true);
+                            Simulation.Schedule<PlayerSpawn>(2);
+                        }
+                    
+                        //Schedule<PlayerDeath>();
+                        targetTime = 1.0f;
                 }
-                targetTime = 1.0f;
+                    
+                    
+                    
+                }
+                else 
+                    targetTime = 1.0f;
+                
+                
                 prev_x = player.transform.position.x;
-            }
+            
 
 
             //player_controller.move = Vector2.right;
@@ -143,7 +176,10 @@ namespace aicontroller
 
         }
 
-
+        private object Schedule<T>()
+        {
+            throw new System.NotImplementedException();
+        }
 
         public GameObject FindSecondClosestPlatformToTheRight(GameObject closest)
         {
