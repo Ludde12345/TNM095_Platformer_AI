@@ -10,6 +10,7 @@ using Platformer.Gameplay;
 using static Platformer.Core.Simulation;
 using Platformer.Model;
 using Platformer.Core;
+using UnityEngine.UI;
 
 namespace aicontroller
 { 
@@ -17,15 +18,19 @@ namespace aicontroller
     {
         public GameObject player;
         public PlayerController playerController;
+        public GameObject textDebug;
+        public BoundsInt area;
+        public Camera camera;
         public Vector3 bottomLeftCheck;
+
         private GNN net;
         private PlayerController player_controller;
         //public Tilemap tilemap;    
-        public BoundsInt area;
-        public Camera camera;
+        
         private int[] current_tiles = new int[527];
         private float prev_x = 0;
         private float targetTime = 1.0f;
+
         //31 x 17
         // Start is called before the first frame update
         void Start()
@@ -77,10 +82,9 @@ namespace aicontroller
             net = new GNN(this);
              
             net.createFirstGeneration();
-           
-             
-             
             
+
+
 
 
 
@@ -162,11 +166,11 @@ namespace aicontroller
             player_controller.move = Vector2.zero;
 
             if (output[0,1] > 0.5) { 
-                player_controller.move = Vector2.right;
+                player_controller.move = Vector2.left;
             }
             
             if (output[0, 2] > 0.5) {
-                player_controller.move = Vector2.left;
+                player_controller.move = Vector2.right;
             }
 
 

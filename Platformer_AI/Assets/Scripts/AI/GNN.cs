@@ -10,7 +10,7 @@ namespace GNN_AI
 
     public class GNN
     {
-
+        
         public class WeightsInfo
         {
             // hidden layer weights
@@ -53,7 +53,7 @@ namespace GNN_AI
         public void createFirstGeneration()
         {
             inputSize = 4;
-            hiddenSize = 3;//välj någon senare
+            hiddenSize = 5;//välj någon senare
             outputSize = 3;
 
             for (int k = 0; k < POPULATION_SIZE; k++)
