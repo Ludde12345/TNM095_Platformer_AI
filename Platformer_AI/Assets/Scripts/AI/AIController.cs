@@ -6,6 +6,7 @@ using UnityEngine;
 using UnityEngine.Tilemaps;
 using static GNN_AI.GNN;
 using Platformer.Gameplay;
+using TMPro;
 
 using static Platformer.Core.Simulation;
 using Platformer.Model;
@@ -18,24 +19,31 @@ namespace aicontroller
     {
         public GameObject player;
         public PlayerController playerController;
-        public GameObject textDebug;
-        public BoundsInt area;
-        public Camera camera;
         public Vector3 bottomLeftCheck;
+        public GameObject in_Nodes;
+        public GameObject hidden_Nodes;
+
+        private TextMeshProUGUI inNodesText;
+        private TextMeshProUGUI hiddenNodesText;
+
 
         private GNN net;
         private PlayerController player_controller;
         //public Tilemap tilemap;    
-        
+        public BoundsInt area;
+        public Camera camera;
         private int[] current_tiles = new int[527];
         private float prev_x = 0;
         private float targetTime = 1.0f;
-
         //31 x 17
         // Start is called before the first frame update
         void Start()
         {
-        
+
+            inNodesText = in_Nodes.GetComponent<TextMeshProUGUI>();
+            hiddenNodesText = hidden_Nodes.GetComponent<TextMeshProUGUI>();
+
+
             player_controller = player.GetComponent <PlayerController>();
         
             bottomLeftCheck = camera.ViewportToWorldPoint(new Vector3(0, 0, camera.nearClipPlane));
@@ -82,9 +90,10 @@ namespace aicontroller
             net = new GNN(this);
              
             net.createFirstGeneration();
+           
+             
+             
             
-
-
 
 
 
@@ -96,15 +105,17 @@ namespace aicontroller
         {
             PlatformerModel model = Simulation.GetModel<PlatformerModel>();
             //var playerController = model.player;
-            playerController.dead = true;
+            //playerController.dead = true;
             
             
             //print(targetTime);
-            
+                
                 if(player.transform.position.x == prev_x)
                 {
+
                     targetTime -= Time.deltaTime;
                     if(targetTime <= 0.0f) {
+                        playerController.dead = true;
                         if (playerController.health.IsAlive)
                         {
                             print("Player dead");
@@ -146,7 +157,7 @@ namespace aicontroller
             print("Platform 1: " + platform1.transform.position);
             print("Platform 2: " + platform2.transform.position);
 
-            double[,] output = net.runForward();
+            double[,] output = net.runForward(inNodesText, hiddenNodesText);
             if (playerController.won || playerController.dead)
             {
                 net.breedNetworks();
@@ -155,7 +166,7 @@ namespace aicontroller
             }
 
             //print(output[0,0]);
-            print(output[0,1]);
+            //print(output[0,1]);
             //print(output[0,2]);
 
             if (output[0,0] > 0.5 && player_controller.jumpState == PlayerController.JumpState.Grounded)
@@ -166,11 +177,11 @@ namespace aicontroller
             player_controller.move = Vector2.zero;
 
             if (output[0,1] > 0.5) { 
-                player_controller.move = Vector2.left;
+                player_controller.move = Vector2.right;
             }
             
             if (output[0, 2] > 0.5) {
-                player_controller.move = Vector2.right;
+                player_controller.move = Vector2.left;
             }
 
 

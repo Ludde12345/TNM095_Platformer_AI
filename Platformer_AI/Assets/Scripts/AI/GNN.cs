@@ -4,6 +4,8 @@ using UnityEngine;
 using aicontroller;
 using System.Linq;
 using System;
+using UnityEngine.UI;
+using TMPro;
 
 namespace GNN_AI
 {
@@ -53,7 +55,7 @@ namespace GNN_AI
         public void createFirstGeneration()
         {
             inputSize = 4;
-            hiddenSize = 5;//välj någon senare
+            hiddenSize = 3;//välj någon senare
             outputSize = 3;
 
             for (int k = 0; k < POPULATION_SIZE; k++)
@@ -80,7 +82,7 @@ namespace GNN_AI
         float xDistFirstP, yDistFirstP, xDistNextP, yDistNextP = 0;
         // called by the game's update() method
         // returns: true if the bird should jump, false otherwise
-        public double[,] runForward()
+        public double[,] runForward(TextMeshProUGUI t1, TextMeshProUGUI t2)
         {
 
             Vector3[] vecArray = gameController.getRelativePos();
@@ -100,10 +102,13 @@ namespace GNN_AI
             input[0, 1] = (camHeight / 2 + yDistFirstP) / camHeight; 
             input[0, 2] = (camWidth / 2 + xDistNextP) / camWidth;
             input[0, 3] = (camHeight / 2 + yDistNextP) / camHeight;
-
             // computing the inputs & outputs for the hidden layer
             double[,] hiddenInputs = multiplyArrays(input, weightsList[crtIndex].weights1);//crtIndex used in src code
             double[,] hiddenOutputs = applySigmoid(hiddenInputs);
+            t1.text = String.Join(" ", weightsList[crtIndex].weights1.Cast<double>());
+
+            t2.text = String.Join(" ", weightsList[crtIndex].weights2.Cast<double>());
+
             // then the final output
             output = applySigmoid(multiplyArrays(hiddenOutputs, weightsList[crtIndex].weights2));
             return output;//[0,0] in our case??
