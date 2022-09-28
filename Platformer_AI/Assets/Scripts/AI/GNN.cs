@@ -54,8 +54,8 @@ namespace GNN_AI
         }
         public void createFirstGeneration()
         {
-            inputSize = 4;
-            hiddenSize = 3;//välj någon senare
+            inputSize = 527;
+            hiddenSize = 5;//välj någon senare
             outputSize = 3;
 
             for (int k = 0; k < POPULATION_SIZE; k++)
@@ -84,7 +84,7 @@ namespace GNN_AI
         // returns: true if the bird should jump, false otherwise
         public double[,] runForward(TextMeshProUGUI t1, TextMeshProUGUI t2)
         {
-
+            
             Vector3[] vecArray = gameController.getRelativePos();
             xDistFirstP = vecArray[0].x;
             yDistFirstP = vecArray[0].y;
@@ -96,12 +96,16 @@ namespace GNN_AI
             Camera cam = gameController.camera;
             Vector3 bottomLeft = cam.ViewportToWorldPoint(new Vector3(0, 0,  cam.nearClipPlane));
             Vector3 topRight = cam.ViewportToWorldPoint(new Vector3(1, 1, cam.nearClipPlane));
+            double[,] tileArray = gameController.GetTiles(bottomLeft, topRight, gameController.tilemap);
+
+
             float camWidth = topRight.x - bottomLeft.x;
             float camHeight = topRight.y - bottomLeft.y;
-            input[0, 0] = (camWidth/2 + xDistFirstP)/camWidth;//normalized coordinates
+            input = tileArray;
+            /*input[0, 0] = (camWidth/2 + xDistFirstP)/camWidth;//normalized coordinates
             input[0, 1] = (camHeight / 2 + yDistFirstP) / camHeight; 
             input[0, 2] = (camWidth / 2 + xDistNextP) / camWidth;
-            input[0, 3] = (camHeight / 2 + yDistNextP) / camHeight;
+            input[0, 3] = (camHeight / 2 + yDistNextP) / camHeight;*/
             // computing the inputs & outputs for the hidden layer
             double[,] hiddenInputs = multiplyArrays(input, weightsList[crtIndex].weights1);//crtIndex used in src code
             double[,] hiddenOutputs = applySigmoid(hiddenInputs);
@@ -209,13 +213,13 @@ namespace GNN_AI
 
         double CROSSOVER_RATE = 0.8;
         double MUTATION_RATE = 0.05;
-        int POPULATION_SIZE = 25;
+        int POPULATION_SIZE = 10;
 
         float averageFitness = 0;
         float maxFitness = 0;
         int generation = 0;
 
-        public void breedNetworks()
+        public void breedNetworks(TextMeshProUGUI t)
         {
             weightsList[crtIndex].fitness = gameController.player.transform.position.x + gameController.playerController.hitPlatforms.Count*10;
             averageFitness += weightsList[crtIndex].fitness;
@@ -231,12 +235,14 @@ namespace GNN_AI
                 Debug.Log("GEN: " + generation + " | AVG: " + averageFitness / (float)POPULATION_SIZE + " | MAX: " + maxFitness);
                 averageFitness = 0;
                 maxFitness = 0;
-                
+                t.text = generation.ToString();
 
                 weightsList = weightsList.OrderByDescending(wi => wi.fitness).ToList();
                 // starting with a large mutation rate so there's will be more solutions to choose from
-                if (weightsList[0].fitness < 30)
+                if (weightsList[0].fitness < 20)
                     MUTATION_RATE = 0.9;
+                else if (weightsList[0].fitness < 30)
+                    MUTATION_RATE = 0.5;
                 else
                     MUTATION_RATE = 0.05;
 

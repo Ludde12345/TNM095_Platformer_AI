@@ -22,17 +22,17 @@ namespace aicontroller
         public Vector3 bottomLeftCheck;
         public GameObject in_Nodes;
         public GameObject hidden_Nodes;
-
+        public GameObject gen_Node;
         private TextMeshProUGUI inNodesText;
         private TextMeshProUGUI hiddenNodesText;
-
+        private TextMeshProUGUI genText;
 
         private GNN net;
         private PlayerController player_controller;
-        //public Tilemap tilemap;    
+        public Tilemap tilemap;    
         public BoundsInt area;
         public Camera camera;
-        private int[] current_tiles = new int[527];
+        private double[,] current_tiles = new double[1,527];
         private float prev_x = 0;
         private float targetTime = 1.0f;
         //31 x 17
@@ -42,7 +42,7 @@ namespace aicontroller
 
             inNodesText = in_Nodes.GetComponent<TextMeshProUGUI>();
             hiddenNodesText = hidden_Nodes.GetComponent<TextMeshProUGUI>();
-
+            genText = gen_Node.GetComponent<TextMeshProUGUI>();
 
             player_controller = player.GetComponent <PlayerController>();
         
@@ -160,9 +160,10 @@ namespace aicontroller
             double[,] output = net.runForward(inNodesText, hiddenNodesText);
             if (playerController.won || playerController.dead)
             {
-                net.breedNetworks();
+                net.breedNetworks(genText);
                 playerController.won = false;
                 playerController.dead = false;
+                
             }
 
             //print(output[0,0]);
@@ -247,7 +248,7 @@ namespace aicontroller
             return vecArray;
         }
         
-        void GetTiles(Vector3 bottomLeft, Vector3 topRight, Tilemap tilemap)
+        public double[,] GetTiles(Vector3 bottomLeft, Vector3 topRight, Tilemap tilemap)
         {
             int sizeY = (int)Mathf.Abs(topRight.y - bottomLeft.y);
             int sizeX = (int)Mathf.Abs(topRight.x - bottomLeft.x);
@@ -275,7 +276,8 @@ namespace aicontroller
                                 //print(worldCoord + tileName);
                                 int iX = Mathf.RoundToInt((worldCoord.x - bottomLeft.x));
                                 int iY = Mathf.RoundToInt((worldCoord.y - bottomLeft.y));
-                                current_tiles[iX * iY] = 1;
+                                //current_tiles[iX * iY] = 1;
+                                current_tiles[0, iX * iY] = 1;
 
                             }
 
@@ -290,6 +292,7 @@ namespace aicontroller
                     print(current_tiles[i]);
                 }*/
             }
+            return current_tiles;
         }
   
 
