@@ -26,6 +26,7 @@ namespace Platformer.Mechanics
         /// Max horizontal speed of the player.
         /// </summary>
         public float maxSpeed = 7;
+        public float prevX = 0;
         /// <summary>
         /// Initial jump velocity at the start of a jump.
         /// </summary>
@@ -59,14 +60,14 @@ namespace Platformer.Mechanics
         {
             if (controlEnabled)
             {
-                //move.x = Input.GetAxis("Horizontal");
-                //if (jumpState == JumpState.Grounded && Input.GetButtonDown("Jump"))
-                //    jumpState = JumpState.PrepareToJump;
-                //else if (Input.GetButtonUp("Jump"))
-                //{
+                move.x = Input.GetAxis("Horizontal");
+                if (jumpState == JumpState.Grounded && Input.GetButtonDown("Jump"))
+                    jumpState = JumpState.PrepareToJump;
+                else if (Input.GetButtonUp("Jump"))
+                {
                 //    //stopJump = true;
                 //    Schedule<PlayerStopJump>().player = this;
-                //}
+                }
             }
             else
             {

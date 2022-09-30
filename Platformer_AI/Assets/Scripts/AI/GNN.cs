@@ -55,7 +55,7 @@ namespace GNN_AI
         public void createFirstGeneration()
         {
             inputSize = 527;
-            hiddenSize = 5;//välj någon senare
+            hiddenSize = 100;//välj någon senare
             outputSize = 3;
 
             for (int k = 0; k < POPULATION_SIZE; k++)
@@ -85,11 +85,11 @@ namespace GNN_AI
         public double[,] runForward(TextMeshProUGUI t1, TextMeshProUGUI t2)
         {
             
-            Vector3[] vecArray = gameController.getRelativePos();
-            xDistFirstP = vecArray[0].x;
-            yDistFirstP = vecArray[0].y;
-            xDistNextP = vecArray[1].x;
-            yDistNextP = vecArray[1].y;
+            //Vector3[] vecArray = gameController.getRelativePos();
+            //xDistFirstP = vecArray[0].x;
+            //yDistFirstP = vecArray[0].y;
+            //xDistNextP = vecArray[1].x;
+            //yDistNextP = vecArray[1].y;
 
             // the inputs for the neural network
             input = new double[1, inputSize];
@@ -102,6 +102,7 @@ namespace GNN_AI
             float camWidth = topRight.x - bottomLeft.x;
             float camHeight = topRight.y - bottomLeft.y;
             input = tileArray;
+            //t1.text = tileArray.ToString();
             /*input[0, 0] = (camWidth/2 + xDistFirstP)/camWidth;//normalized coordinates
             input[0, 1] = (camHeight / 2 + yDistFirstP) / camHeight; 
             input[0, 2] = (camWidth / 2 + xDistNextP) / camWidth;
@@ -109,7 +110,7 @@ namespace GNN_AI
             // computing the inputs & outputs for the hidden layer
             double[,] hiddenInputs = multiplyArrays(input, weightsList[crtIndex].weights1);//crtIndex used in src code
             double[,] hiddenOutputs = applySigmoid(hiddenInputs);
-            t1.text = String.Join(" ", weightsList[crtIndex].weights1.Cast<double>());
+            t1.text = String.Join(" ", tileArray.Cast<double>());
 
             t2.text = String.Join(" ", weightsList[crtIndex].weights2.Cast<double>());
 
@@ -213,7 +214,7 @@ namespace GNN_AI
 
         double CROSSOVER_RATE = 0.8;
         double MUTATION_RATE = 0.05;
-        int POPULATION_SIZE = 10;
+        int POPULATION_SIZE = 30;
 
         float averageFitness = 0;
         float maxFitness = 0;
@@ -239,10 +240,8 @@ namespace GNN_AI
 
                 weightsList = weightsList.OrderByDescending(wi => wi.fitness).ToList();
                 // starting with a large mutation rate so there's will be more solutions to choose from
-                if (weightsList[0].fitness < 20)
+                if (weightsList[0].fitness < 5)
                     MUTATION_RATE = 0.9;
-                else if (weightsList[0].fitness < 30)
-                    MUTATION_RATE = 0.5;
                 else
                     MUTATION_RATE = 0.05;
 

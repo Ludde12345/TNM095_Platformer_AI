@@ -18,6 +18,8 @@ namespace Platformer.Gameplay
         {
             var player = model.player;
             player.dead = true;
+            player.prevX = 0;
+            Debug.Log("DED");
             if (player.health.IsAlive)
             {
                 player.health.Die();

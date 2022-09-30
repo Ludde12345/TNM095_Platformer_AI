@@ -13,10 +13,12 @@ using Platformer.Model;
 using Platformer.Core;
 using UnityEngine.UI;
 
+
 namespace aicontroller
 { 
     public class AIController : MonoBehaviour
     {
+        const int checkTime = 100;
         public GameObject player;
         public PlayerController playerController;
         public Vector3 bottomLeftCheck;
@@ -32,14 +34,15 @@ namespace aicontroller
         public Tilemap tilemap;    
         public BoundsInt area;
         public Camera camera;
+        private float prev_x2 = 0;
         private double[,] current_tiles = new double[1,527];
         private float prev_x = 0;
-        private float targetTime = 1.0f;
         //31 x 17
+        private float targetTime = checkTime;
         // Start is called before the first frame update
         void Start()
         {
-
+            Time.timeScale = 1;
             inNodesText = in_Nodes.GetComponent<TextMeshProUGUI>();
             hiddenNodesText = hidden_Nodes.GetComponent<TextMeshProUGUI>();
             genText = gen_Node.GetComponent<TextMeshProUGUI>();
@@ -106,44 +109,49 @@ namespace aicontroller
             PlatformerModel model = Simulation.GetModel<PlatformerModel>();
             //var playerController = model.player;
             //playerController.dead = true;
-            
-            
+
+
             //print(targetTime);
+            //float targetTime = 1.0f;
+
+            //if(targetTime <= 0.0f) {
+            if (player.transform.position.y < -2.5)
+            {
+                print("Player dead");
+                playerController.Teleport(model.spawnPoint.transform.position);
+                playerController.prevX = 0;
+            }
+
+            if(targetTime <= 0.0f) { 
+                if (player.transform.position.x <= playerController.prevX)//Input.GetButton("Jump")
+            {
+
+                    print("current_pos: " + player.transform.position.x + " prev_pos: " + playerController.prevX);
+                    playerController.dead = true;
+                    playerController.move = Vector2.zero;
+                   
+                    playerController.Teleport(model.spawnPoint.transform.position);
+                            
                 
-                if(player.transform.position.x == prev_x)
+                    playerController.prevX = 0;
+
+
+            }
+                else
                 {
 
-                    targetTime -= Time.deltaTime;
-                    if(targetTime <= 0.0f) {
-                        playerController.dead = true;
-                        if (playerController.health.IsAlive)
-                        {
-                            print("Player dead");
-                            playerController.health.Die();
-                            model.virtualCamera.m_Follow = null;
-                            model.virtualCamera.m_LookAt = null;
-                            // player.collider.enabled = false;
-                            playerController.controlEnabled = false;
+                    print("updated prevX");
+                    playerController.prevX = player.transform.position.x;
+                }
 
-                            if (playerController.audioSource && playerController.ouchAudio)
-                                playerController.audioSource.PlayOneShot(playerController.ouchAudio);
-                            playerController.animator.SetTrigger("hurt");
-                            playerController.animator.SetBool("dead", true);
-                            Simulation.Schedule<PlayerSpawn>(2);
-                        }
-                    
-                        //Schedule<PlayerDeath>();
-                        targetTime = 1.0f;
-                }
-                    
-                    
-                    
-                }
-                else 
-                    targetTime = 1.0f;
+                    targetTime = checkTime;
+            }
+
+
+            targetTime--;
+           // print(targetTime);
                 
                 
-                prev_x = player.transform.position.x;
             
 
 
@@ -157,37 +165,44 @@ namespace aicontroller
             //print("Platform 1: " + platform1.transform.position);
             //print("Platform 2: " + platform2.transform.position);
 
-            double[,] output = net.runForward(inNodesText, hiddenNodesText);
-            if (playerController.won || playerController.dead)
-            {
+            /* double[,] output = net.runForward(inNodesText, hiddenNodesText);
+             if (playerController.won || playerController.dead)
+             {
                 net.breedNetworks(genText);
-                playerController.won = false;
-                playerController.dead = false;
-                
-            }
+                 playerController.won = false;
+                 playerController.dead = false;
 
-            //print(output[0,0]);
-            //print(output[0,1]);
-            //print(output[0,2]);
+             }
 
-            if (output[0,0] > 0.5 && player_controller.jumpState == PlayerController.JumpState.Grounded)
-            {
-                player_controller.jumpState = PlayerController.JumpState.PrepareToJump;
-            }
+             //print(output[0,0]);
+             //print(output[0,1]);
+             //print(output[0,2]);
 
-            player_controller.move = Vector2.zero;
+             if (output[0,0] > 0.5 && player_controller.jumpState == PlayerController.JumpState.Grounded)
+             {
+                 player_controller.jumpState = PlayerController.JumpState.PrepareToJump;
+             }
 
-            if (output[0,1] > 0.5) { 
-                player_controller.move = Vector2.right;
-            }
-            
-            if (output[0, 2] > 0.5) {
-                player_controller.move = Vector2.left;
-            }
+             //player_controller.move = Vector2.zero;
+
+             if (output[0,1] > 0.5) { 
+                 player_controller.move = Vector2.right;
+             }
+
+             if (output[0, 2] > 0.5) {
+                 player_controller.move = Vector2.left;
+             }
+            */
 
 
             //print( "in ai controller: "+ player_controller.move);
 
+            if(player_controller.move == Vector2.right && player.transform.position.x <= prev_x2 + 0.01)
+            {
+                player_controller.move = Vector2.zero;
+            }
+
+            prev_x2 = player.transform.position.x;
 
 
         }
@@ -256,7 +271,7 @@ namespace aicontroller
             TileBase[] tileArray = tilemap.GetTilesBlock(area);
             if ((bottomLeftCheck - bottomLeft).magnitude > 0.5)
             {
-                print("inside");
+                //print("inside");
                 bottomLeftCheck = bottomLeft;
 
 
@@ -266,19 +281,23 @@ namespace aicontroller
 
                     if (tilemap.HasTile(position))
                     {
-
-                        string tileName = tilemap.GetTile(position).name;
-                        if (tileName == "TileGround" || tileName == "TileGroundTop" || tileName == "TileFloatingLeftEdge" || tileName == "TileFloatingMiddle" || tileName == "TileFloatingRightEdge")
+                        Vector3 worldCoord = tilemap.CellToWorld(position);
+                        if ((worldCoord.x > bottomLeft.x && worldCoord.y > bottomLeft.y) && (worldCoord.x < topRight.x && worldCoord.y < topRight.y))
                         {
-                            Vector3 worldCoord = tilemap.CellToWorld(position);
-                            if ((worldCoord.x > bottomLeft.x && worldCoord.y > bottomLeft.y) && (worldCoord.x < topRight.x && worldCoord.y < topRight.y))
+                            string tileName = tilemap.GetTile(position).name;
+                            int iX = Mathf.RoundToInt((worldCoord.x - bottomLeft.x));
+                            int iY = Mathf.RoundToInt((worldCoord.y - bottomLeft.y));
+                            if (tileName == "TileGround" || tileName == "TileGroundTop" || tileName == "TileFloatingLeftEdge" || tileName == "TileFloatingMiddle" || tileName == "TileFloatingRightEdge")
                             {
+                         
                                 //print(worldCoord + tileName);
-                                int iX = Mathf.RoundToInt((worldCoord.x - bottomLeft.x));
-                                int iY = Mathf.RoundToInt((worldCoord.y - bottomLeft.y));
                                 //current_tiles[iX * iY] = 1;
                                 current_tiles[0, iX * iY] = 1;
 
+                            }
+                            else
+                            {
+                                current_tiles[0, iX * iY] = 0;
                             }
 
                         }
