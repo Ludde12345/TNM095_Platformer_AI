@@ -6,13 +6,15 @@ using System.Linq;
 using System;
 using UnityEngine.UI;
 using TMPro;
+using System.IO;
+using System.Runtime.Serialization.Formatters.Binary;
 
 namespace GNN_AI
 {
 
     public class GNN
     {
-        
+        [Serializable]
         public class WeightsInfo
         {
             // hidden layer weights
@@ -38,14 +40,16 @@ namespace GNN_AI
                 this.weights2 = new double[hiddenSize, outputSize];
             }
         }
-
+        public bool genCheck = false;
+        private bool fileLoaded = false;
+        private WeightsInfo fileWeights;
         public AIController gameController;
         System.Random r = new System.Random();
         static int inputSize, hiddenSize, outputSize;
         double[,] input, output;
         List<WeightsInfo> weightsList = new List<WeightsInfo>();
         List<WeightsInfo> nextWeightsList = new List<WeightsInfo>();
-       
+
         int crtIndex = 0; // Tror det har med parrallelism
 
         public GNN(AIController gameController)
@@ -53,7 +57,17 @@ namespace GNN_AI
             this.gameController = gameController;
         }
         public void createFirstGeneration()
+
         {
+            try
+            {
+                LoadFile();
+            }
+            catch (Exception e)
+            {
+                // recover from exception
+            }
+
             inputSize = 527;
             hiddenSize = 100;//välj någon senare
             outputSize = 3;
@@ -77,14 +91,14 @@ namespace GNN_AI
             }
         }
 
-        
+
 
         float xDistFirstP, yDistFirstP, xDistNextP, yDistNextP = 0;
         // called by the game's update() method
         // returns: true if the bird should jump, false otherwise
-        public double[,] runForward(TextMeshProUGUI t1, TextMeshProUGUI t2)
+        public double[,] runForward(TextMeshProUGUI t1, TextMeshProUGUI t2, bool useFile)
         {
-            
+
             //Vector3[] vecArray = gameController.getRelativePos();
             //xDistFirstP = vecArray[0].x;
             //yDistFirstP = vecArray[0].y;
@@ -92,9 +106,11 @@ namespace GNN_AI
             //yDistNextP = vecArray[1].y;
 
             // the inputs for the neural network
+            List<WeightsInfo> tempweightsList;
+            WeightsInfo currWeightsinfo;
             input = new double[1, inputSize];
             Camera cam = gameController.camera;
-            Vector3 bottomLeft = cam.ViewportToWorldPoint(new Vector3(0, 0,  cam.nearClipPlane));
+            Vector3 bottomLeft = cam.ViewportToWorldPoint(new Vector3(0, 0, cam.nearClipPlane));
             Vector3 topRight = cam.ViewportToWorldPoint(new Vector3(1, 1, cam.nearClipPlane));
             double[,] tileArray = gameController.GetTiles(bottomLeft, topRight, gameController.tilemap);
 
@@ -108,14 +124,31 @@ namespace GNN_AI
             input[0, 2] = (camWidth / 2 + xDistNextP) / camWidth;
             input[0, 3] = (camHeight / 2 + yDistNextP) / camHeight;*/
             // computing the inputs & outputs for the hidden layer
-            double[,] hiddenInputs = multiplyArrays(input, weightsList[crtIndex].weights1);//crtIndex used in src code
+
+            if (useFile)
+            {
+                if (!fileLoaded)
+                {
+                    LoadFile();
+                }
+                currWeightsinfo = fileWeights;
+                Debug.Log(fileWeights.fitness);
+
+
+
+            }
+            else
+            {
+                currWeightsinfo = weightsList[crtIndex];
+            }
+            double[,] hiddenInputs = multiplyArrays(input, currWeightsinfo.weights1);//crtIndex used in src code
             double[,] hiddenOutputs = applySigmoid(hiddenInputs);
             t1.text = String.Join(" ", tileArray.Cast<double>());
 
-            t2.text = String.Join(" ", weightsList[crtIndex].weights2.Cast<double>());
+            t2.text = String.Join(" ", currWeightsinfo.weights2.Cast<double>());
 
             // then the final output
-            output = applySigmoid(multiplyArrays(hiddenOutputs, weightsList[crtIndex].weights2));
+            output = applySigmoid(multiplyArrays(hiddenOutputs, currWeightsinfo.weights2));
             return output;//[0,0] in our case??
         }
         void encode(WeightsInfo weightsInfo, List<double> gene)
@@ -214,15 +247,17 @@ namespace GNN_AI
 
         double CROSSOVER_RATE = 0.8;
         double MUTATION_RATE = 0.05;
-        int POPULATION_SIZE = 30;
+        int POPULATION_SIZE = 100;
 
         float averageFitness = 0;
         float maxFitness = 0;
         int generation = 0;
 
-        public void breedNetworks(TextMeshProUGUI t)
+
+        public void breedNetworks(TextMeshProUGUI t, bool won)
         {
-            weightsList[crtIndex].fitness = gameController.player.transform.position.x + gameController.playerController.hitPlatforms.Count*10;
+            //weightsList[crtIndex].fitness = ; //+ gameController.playerController.hitPlatforms.Count*10;
+            weightsList[crtIndex].fitness = (won ? 20 : 0) + gameController.player.transform.position.x;
             averageFitness += weightsList[crtIndex].fitness;
             maxFitness = maxFitness > weightsList[crtIndex].fitness ? maxFitness : weightsList[crtIndex].fitness;
             Debug.Log("FITNESS: " + weightsList[crtIndex].fitness);
@@ -233,21 +268,26 @@ namespace GNN_AI
             {
                 crtIndex = 0;
                 generation++;
+
                 Debug.Log("GEN: " + generation + " | AVG: " + averageFitness / (float)POPULATION_SIZE + " | MAX: " + maxFitness);
                 averageFitness = 0;
                 maxFitness = 0;
                 t.text = generation.ToString();
 
                 weightsList = weightsList.OrderByDescending(wi => wi.fitness).ToList();
+                if (generation >= 1 && generation % 5 == 0)
+                {
+                    SaveFile();
+                }
                 // starting with a large mutation rate so there's will be more solutions to choose from
-                if (weightsList[0].fitness < 5)
+                if (weightsList[0].fitness < 24)
                     MUTATION_RATE = 0.9;
                 else
                     MUTATION_RATE = 0.05;
 
                 int iterations = 0;
                 // creating a new generation 
-                while (nextWeightsList.Count < POPULATION_SIZE && iterations < 50)
+                while (nextWeightsList.Count < POPULATION_SIZE)
                 {
                     iterations++;
                     WeightsInfo w1 = select();
@@ -284,7 +324,7 @@ namespace GNN_AI
                     if (!nextWeightsList.Contains(w2))
                         nextWeightsList.Add(w2);
                 }
-                
+
 
                 weightsList.Clear();
                 nextWeightsList = nextWeightsList.OrderByDescending(wi => wi.fitness).ToList();
@@ -306,7 +346,7 @@ namespace GNN_AI
                     array[i, j] = sigmoid(array[i, j]);
 
             return array;
-        }       
+        }
 
 
         double sigmoid(double x)
@@ -327,6 +367,66 @@ namespace GNN_AI
                 }
             return a3;
         }
+
+        public void outputfromfile(GameData data)
+        {
+
+        }
+
+        public void SaveFile()
+        {
+            string destination = Application.persistentDataPath + "/save.dat";
+            FileStream file;
+
+            if (File.Exists(destination)) file = File.OpenWrite(destination);
+            else file = File.Create(destination);
+
+            GameData data = new GameData(weightsList);
+
+
+
+            BinaryFormatter bf = new BinaryFormatter();
+            Debug.Log("Saved file!");
+            bf.Serialize(file, data);
+            file.Close();
+            fileLoaded = false;
+        }
+
+        public void LoadFile()
+        {
+            string destination = Application.persistentDataPath + "/save.dat";
+            FileStream file;
+
+            if (File.Exists(destination)) file = File.OpenRead(destination);
+            else
+            {
+                Debug.LogError("File not found");
+                return;
+            }
+
+            BinaryFormatter bf = new BinaryFormatter();
+            GameData data = (GameData)bf.Deserialize(file);
+            file.Close();
+
+            List<WeightsInfo> tempweightsList = data.weightsList;
+
+            Debug.Log(tempweightsList);
+            fileLoaded = true;
+            fileWeights = tempweightsList[0];
+            return;
+        }
+
+        [Serializable]
+        public class GameData
+        {
+            public List<WeightsInfo> weightsList;
+
+            public GameData(List<WeightsInfo> _weightsList)
+            {
+                weightsList = _weightsList;
+            }
+        }
+
     }
 }
-    
+

@@ -58,7 +58,7 @@ namespace Platformer.Mechanics
 
         protected override void Update()
         {
-            if (controlEnabled)
+            /*if (controlEnabled)
             {
                 move.x = Input.GetAxis("Horizontal");
                 if (jumpState == JumpState.Grounded && Input.GetButtonDown("Jump"))
@@ -72,7 +72,7 @@ namespace Platformer.Mechanics
             else
             {
                 //move.x = 0;
-            }
+            }*/
             UpdateJumpState();
             base.Update();
         }

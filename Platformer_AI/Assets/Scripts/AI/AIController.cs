@@ -12,12 +12,15 @@ using static Platformer.Core.Simulation;
 using Platformer.Model;
 using Platformer.Core;
 using UnityEngine.UI;
-
+using System.IO;
+using System.Runtime.Serialization.Formatters.Binary;
 
 namespace aicontroller
-{ 
+{
     public class AIController : MonoBehaviour
     {
+        public bool useFile;
+        public int timeScale;
         const int checkTime = 100;
         public GameObject player;
         public PlayerController playerController;
@@ -31,24 +34,24 @@ namespace aicontroller
 
         private GNN net;
         private PlayerController player_controller;
-        public Tilemap tilemap;    
+        public Tilemap tilemap;
         public BoundsInt area;
         public Camera camera;
         private float prev_x2 = 0;
-        private double[,] current_tiles = new double[1,527];
+        private double[,] current_tiles = new double[1, 527];
         private float prev_x = 0;
         //31 x 17
         private float targetTime = checkTime;
         // Start is called before the first frame update
         void Start()
         {
-            Time.timeScale = 1;
+            Time.timeScale = timeScale;
             inNodesText = in_Nodes.GetComponent<TextMeshProUGUI>();
             hiddenNodesText = hidden_Nodes.GetComponent<TextMeshProUGUI>();
             genText = gen_Node.GetComponent<TextMeshProUGUI>();
 
-            player_controller = player.GetComponent <PlayerController>();
-        
+            player_controller = player.GetComponent<PlayerController>();
+
             bottomLeftCheck = camera.ViewportToWorldPoint(new Vector3(0, 0, camera.nearClipPlane));
 
 
@@ -91,12 +94,12 @@ namespace aicontroller
 
 
             net = new GNN(this);
-             
+
             net.createFirstGeneration();
-           
-             
-             
-            
+
+
+
+
 
 
 
@@ -106,6 +109,8 @@ namespace aicontroller
         // Update is called once per frame
         void FixedUpdate()
         {
+            //Time.timeScale = timeScale;
+
             PlatformerModel model = Simulation.GetModel<PlatformerModel>();
             //var playerController = model.player;
             //playerController.dead = true;
@@ -117,90 +122,118 @@ namespace aicontroller
             //if(targetTime <= 0.0f) {
             if (player.transform.position.y < -2.5)
             {
-                print("Player dead");
+                // print("Player dead");
+                playerController.dead = true;
+                playerController.move = Vector2.zero;
+                playerController.Teleport(model.spawnPoint.transform.position);
+                playerController.prevX = 0;
+            }
+            if (player.transform.position.x > 40)
+            {
+                print("Player won");
+                playerController.won = true;
+                playerController.move = Vector2.zero;
                 playerController.Teleport(model.spawnPoint.transform.position);
                 playerController.prevX = 0;
             }
 
-            if(targetTime <= 0.0f) { 
-                if (player.transform.position.x <= playerController.prevX)//Input.GetButton("Jump")
+            if (targetTime <= 0.0f)
             {
+                if (player.transform.position.x <= playerController.prevX)//Input.GetButton("Jump")
+                {
 
-                    print("current_pos: " + player.transform.position.x + " prev_pos: " + playerController.prevX);
+                    //print("current_pos: " + player.transform.position.x + " prev_pos: " + playerController.prevX);
                     playerController.dead = true;
                     playerController.move = Vector2.zero;
-                   
+
                     playerController.Teleport(model.spawnPoint.transform.position);
-                            
-                
+
+
                     playerController.prevX = 0;
 
 
-            }
+                }
                 else
                 {
 
-                    print("updated prevX");
+                    //print("updated prevX");
                     playerController.prevX = player.transform.position.x;
                 }
 
-                    targetTime = checkTime;
+                targetTime = checkTime;
             }
 
 
             targetTime--;
-           // print(targetTime);
-                
-                
-            
+            // print(targetTime);
+
+
+
 
 
             //player_controller.move = Vector2.right;
             Vector3 bottomLeft = camera.ViewportToWorldPoint(new Vector3(0, 0, camera.nearClipPlane));
             Vector3 topRight = camera.ViewportToWorldPoint(new Vector3(1, 1, camera.nearClipPlane));
-        
+
             GameObject platform1 = FindClosestPlatform();
             GameObject platform2 = FindSecondClosestPlatformToTheRight(platform1);
 
             //print("Platform 1: " + platform1.transform.position);
             //print("Platform 2: " + platform2.transform.position);
 
-            /* double[,] output = net.runForward(inNodesText, hiddenNodesText);
-             if (playerController.won || playerController.dead)
-             {
-                net.breedNetworks(genText);
-                 playerController.won = false;
-                 playerController.dead = false;
 
-             }
+            double[,] output = net.runForward(inNodesText, hiddenNodesText, useFile);
+            if (playerController.won)
+            {
+                net.SaveFile();
+                useFile = true;
+            }
+            else if (!useFile && playerController.dead)
+            {
+                net.breedNetworks(genText, playerController.won);
+                playerController.won = false;
+                playerController.dead = false;
 
-             //print(output[0,0]);
-             //print(output[0,1]);
-             //print(output[0,2]);
+            }
 
-             if (output[0,0] > 0.5 && player_controller.jumpState == PlayerController.JumpState.Grounded)
-             {
-                 player_controller.jumpState = PlayerController.JumpState.PrepareToJump;
-             }
 
-             //player_controller.move = Vector2.zero;
 
-             if (output[0,1] > 0.5) { 
-                 player_controller.move = Vector2.right;
-             }
 
-             if (output[0, 2] > 0.5) {
-                 player_controller.move = Vector2.left;
-             }
-            */
+            //print(output[0,0]);
+            //print(output[0,1]);
+            //print(output[0,2]);
+
+            if (output[0, 0] > 0.5 && player_controller.jumpState == PlayerController.JumpState.Grounded)
+            {
+                player_controller.jumpState = PlayerController.JumpState.PrepareToJump;
+            }
+
+            //player_controller.move = Vector2.zero;
+
+            if (output[0, 1] > 0.5)
+            {
+                player_controller.move = Vector2.right;
+            }
+
+            if (output[0, 2] > 0.5)
+            {
+                player_controller.move = Vector2.left;
+            }
+
 
 
             //print( "in ai controller: "+ player_controller.move);
+            LayerMask mask = LayerMask.GetMask("Default");
+            //RaycastHit2D hitObject ;
+            var hitObject = Physics2D.Raycast(player.transform.position, player.transform.right, 0.5f, mask);
 
-            if(player_controller.move == Vector2.right && player.transform.position.x <= prev_x2 + 0.01)
+            if (player_controller.move == Vector2.right && (hitObject.collider != null))
             {
                 player_controller.move = Vector2.zero;
+
+                // print("stopping right movement" + hitObject.transform.gameObject.name);
             }
+
 
             prev_x2 = player.transform.position.x;
 
@@ -259,10 +292,10 @@ namespace aicontroller
 
             Vector3 relp1 = p1.transform.position - player.transform.position;
             Vector3 relp2 = p2.transform.position - player.transform.position;
-            Vector3[] vecArray = { relp1, relp2 };            
+            Vector3[] vecArray = { relp1, relp2 };
             return vecArray;
         }
-        
+
         public double[,] GetTiles(Vector3 bottomLeft, Vector3 topRight, Tilemap tilemap)
         {
             int sizeY = (int)Mathf.Abs(topRight.y - bottomLeft.y);
@@ -289,7 +322,7 @@ namespace aicontroller
                             int iY = Mathf.RoundToInt((worldCoord.y - bottomLeft.y));
                             if (tileName == "TileGround" || tileName == "TileGroundTop" || tileName == "TileFloatingLeftEdge" || tileName == "TileFloatingMiddle" || tileName == "TileFloatingRightEdge")
                             {
-                         
+
                                 //print(worldCoord + tileName);
                                 //current_tiles[iX * iY] = 1;
                                 current_tiles[0, iX * iY] = 1;
@@ -313,8 +346,7 @@ namespace aicontroller
             }
             return current_tiles;
         }
-  
 
-   
+
     }
 }
