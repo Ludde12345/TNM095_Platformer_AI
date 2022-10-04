@@ -68,7 +68,7 @@ namespace GNN_AI
                 // recover from exception
             }
 
-            inputSize = 527;
+            inputSize = 558;
             hiddenSize = 100;//välj någon senare
             outputSize = 3;
 
@@ -247,7 +247,7 @@ namespace GNN_AI
 
         double CROSSOVER_RATE = 0.8;
         double MUTATION_RATE = 0.05;
-        int POPULATION_SIZE = 100;
+        int POPULATION_SIZE = 25;
 
         float averageFitness = 0;
         float maxFitness = 0;
@@ -275,10 +275,10 @@ namespace GNN_AI
                 t.text = generation.ToString();
 
                 weightsList = weightsList.OrderByDescending(wi => wi.fitness).ToList();
-                if (generation >= 1 && generation % 5 == 0)
+                /*if (generation >= 1 && generation % 5 == 0)
                 {
                     SaveFile();
-                }
+                }*/
                 // starting with a large mutation rate so there's will be more solutions to choose from
                 if (weightsList[0].fitness < 24)
                     MUTATION_RATE = 0.9;

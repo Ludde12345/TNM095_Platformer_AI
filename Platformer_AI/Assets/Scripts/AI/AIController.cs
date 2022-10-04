@@ -14,6 +14,7 @@ using Platformer.Core;
 using UnityEngine.UI;
 using System.IO;
 using System.Runtime.Serialization.Formatters.Binary;
+using System;
 
 namespace aicontroller
 {
@@ -31,6 +32,7 @@ namespace aicontroller
         private TextMeshProUGUI inNodesText;
         private TextMeshProUGUI hiddenNodesText;
         private TextMeshProUGUI genText;
+        private bool init = false;
 
         private GNN net;
         private PlayerController player_controller;
@@ -38,7 +40,7 @@ namespace aicontroller
         public BoundsInt area;
         public Camera camera;
         private float prev_x2 = 0;
-        private double[,] current_tiles = new double[1, 527];
+        private double[,] current_tiles = new double[1, 558];
         private float prev_x = 0;
         //31 x 17
         private float targetTime = checkTime;
@@ -181,8 +183,9 @@ namespace aicontroller
             //print("Platform 1: " + platform1.transform.position);
             //print("Platform 2: " + platform2.transform.position);
 
-
+            
             double[,] output = net.runForward(inNodesText, hiddenNodesText, useFile);
+            
             if (playerController.won)
             {
                 net.SaveFile();
@@ -221,7 +224,7 @@ namespace aicontroller
             }
 
 
-
+            
             //print( "in ai controller: "+ player_controller.move);
             LayerMask mask = LayerMask.GetMask("Default");
             //RaycastHit2D hitObject ;
@@ -302,10 +305,14 @@ namespace aicontroller
             int sizeX = (int)Mathf.Abs(topRight.x - bottomLeft.x);
             BoundsInt area = new BoundsInt((int)bottomLeft.x, (int)bottomLeft.y, 0, sizeX, sizeY, 1);
             TileBase[] tileArray = tilemap.GetTilesBlock(area);
-            if ((bottomLeftCheck - bottomLeft).magnitude > 0.5)
+            if (!init || (bottomLeftCheck - bottomLeft).magnitude > 0.5)
             {
+                init = true;
                 //print("inside");
                 bottomLeftCheck = bottomLeft;
+                //print(topRight);
+
+                current_tiles = new double[1, 558];
 
 
                 foreach (var position in tilemap.cellBounds.allPositionsWithin)
@@ -318,20 +325,35 @@ namespace aicontroller
                         if ((worldCoord.x > bottomLeft.x && worldCoord.y > bottomLeft.y) && (worldCoord.x < topRight.x && worldCoord.y < topRight.y))
                         {
                             string tileName = tilemap.GetTile(position).name;
-                            int iX = Mathf.RoundToInt((worldCoord.x - bottomLeft.x));
-                            int iY = Mathf.RoundToInt((worldCoord.y - bottomLeft.y));
-                            if (tileName == "TileGround" || tileName == "TileGroundTop" || tileName == "TileFloatingLeftEdge" || tileName == "TileFloatingMiddle" || tileName == "TileFloatingRightEdge")
-                            {
+                            int iX = Math.Abs((tilemap.WorldToCell(bottomLeft).x - position.x));
+                            int iY = Math.Abs((tilemap.WorldToCell(bottomLeft).y - position.y ));
+                        if (tileName == "TileGround" || tileName == "TileGroundTop" || tileName == "TileFloatingLeftEdge" || tileName == "TileFloatingMiddle" || tileName == "TileFloatingRightEdge")
+                        {
 
-                                //print(worldCoord + tileName);
-                                //current_tiles[iX * iY] = 1;
-                                current_tiles[0, iX * iY] = 1;
-
-                            }
-                            else
+                            //print(worldCoord + tileName);
+                            //current_tiles[iX * iY] = 1;
+                            try
                             {
-                                current_tiles[0, iX * iY] = 0;
+                                current_tiles[0, iX + (18 -iY) * 31 ] = 1;
                             }
+                            catch (Exception e)
+                            {
+                                //print("error with" + iX + ", " + iY);
+                            }
+                        }
+
+
+                        else
+                        {
+                            try
+                            {
+                                current_tiles[0, iX + (18 - iY) * 31] = 0;
+                            }
+                            catch (Exception e)
+                            {
+                                print("error with" + iX + ", " + iY);
+                            }
+                        }
 
                         }
                     }
