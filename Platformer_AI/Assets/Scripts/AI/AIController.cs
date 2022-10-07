@@ -22,7 +22,7 @@ namespace aicontroller
     {
         public bool useFile;
         public int timeScale;
-        const int checkTime = 100;
+        const int checkTime = 20;
         public GameObject player;
         public PlayerController playerController;
         public Vector3 bottomLeftCheck;
@@ -48,6 +48,7 @@ namespace aicontroller
         void Start()
         {
             Time.timeScale = timeScale;
+            
             inNodesText = in_Nodes.GetComponent<TextMeshProUGUI>();
             hiddenNodesText = hidden_Nodes.GetComponent<TextMeshProUGUI>();
             genText = gen_Node.GetComponent<TextMeshProUGUI>();
@@ -126,17 +127,17 @@ namespace aicontroller
             {
                 // print("Player dead");
                 playerController.dead = true;
-                playerController.move = Vector2.zero;
-                playerController.Teleport(model.spawnPoint.transform.position);
-                playerController.prevX = 0;
+                
+                
+
+
+
             }
             if (player.transform.position.x > 40)
             {
                 print("Player won");
                 playerController.won = true;
-                playerController.move = Vector2.zero;
-                playerController.Teleport(model.spawnPoint.transform.position);
-                playerController.prevX = 0;
+                
             }
 
             if (targetTime <= 0.0f)
@@ -146,13 +147,6 @@ namespace aicontroller
 
                     //print("current_pos: " + player.transform.position.x + " prev_pos: " + playerController.prevX);
                     playerController.dead = true;
-                    playerController.move = Vector2.zero;
-
-                    playerController.Teleport(model.spawnPoint.transform.position);
-
-
-                    playerController.prevX = 0;
-
 
                 }
                 else
@@ -184,21 +178,32 @@ namespace aicontroller
             //print("Platform 2: " + platform2.transform.position);
 
             
-            double[,] output = net.runForward(inNodesText, hiddenNodesText, useFile);
             
-            if (playerController.won)
+          
+            if (playerController.dead || playerController.won)
             {
-                net.SaveFile();
-                useFile = true;
-            }
-            else if (!useFile && playerController.dead)
-            {
-                net.breedNetworks(genText, playerController.won);
+                playerController.move = Vector2.zero;
+                playerController.jumpState = PlayerController.JumpState.Grounded;
+                playerController.Teleport(model.spawnPoint.transform.position);
+                playerController.prevX = 0;
+                if (!useFile)
+                {
+
+                    net.breedNetworks(genText, playerController.won);
+                    if (playerController.won)
+                    {
+                        Time.timeScale = 1;
+                        useFile = true;
+                    }
+                }
                 playerController.won = false;
                 playerController.dead = false;
 
+                return;
             }
 
+
+            double[,] output = net.runForward(inNodesText, hiddenNodesText, useFile);
 
 
 
@@ -234,7 +239,7 @@ namespace aicontroller
             {
                 player_controller.move = Vector2.zero;
 
-                // print("stopping right movement" + hitObject.transform.gameObject.name);
+                //print("stopping right movement" + hitObject.transform.gameObject.name);
             }
 
 

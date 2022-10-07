@@ -247,7 +247,7 @@ namespace GNN_AI
 
         double CROSSOVER_RATE = 0.8;
         double MUTATION_RATE = 0.05;
-        int POPULATION_SIZE = 25;
+        int POPULATION_SIZE = 100;
 
         float averageFitness = 0;
         float maxFitness = 0;
@@ -262,6 +262,18 @@ namespace GNN_AI
             maxFitness = maxFitness > weightsList[crtIndex].fitness ? maxFitness : weightsList[crtIndex].fitness;
             Debug.Log("FITNESS: " + weightsList[crtIndex].fitness);
 
+            if (won)
+            {
+                Debug.Log("GEN: " + generation + " | AVG: " + averageFitness / (float)POPULATION_SIZE + " | MAX: " + maxFitness);
+                averageFitness = 0;
+                maxFitness = 0;
+                t.text = generation.ToString();
+
+                weightsList = weightsList.OrderByDescending(wi => wi.fitness).ToList();
+                SaveFile();
+                return;
+            }
+
             if (crtIndex + 1 < weightsList.Count)
                 crtIndex++;
             else
@@ -275,10 +287,7 @@ namespace GNN_AI
                 t.text = generation.ToString();
 
                 weightsList = weightsList.OrderByDescending(wi => wi.fitness).ToList();
-                /*if (generation >= 1 && generation % 5 == 0)
-                {
-                    SaveFile();
-                }*/
+               
                 // starting with a large mutation rate so there's will be more solutions to choose from
                 if (weightsList[0].fitness < 24)
                     MUTATION_RATE = 0.9;
