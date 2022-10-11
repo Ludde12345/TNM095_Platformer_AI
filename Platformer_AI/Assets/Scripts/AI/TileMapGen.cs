@@ -14,7 +14,7 @@ namespace MAPGEN
         {
             int[,] map = new int[width, height];
             Random rnd = new Random();
-            int holes = rnd.Next(3, 5);
+            int holes = rnd.Next(5, 8);
             int xR = 0;
             bool[] empArr = new bool[width];
             int yoffset = 0;
@@ -44,7 +44,7 @@ namespace MAPGEN
                     {
                         if (empArr[x-1] && empArr[x + 1])
                         {
-                            yoffset = rnd.Next(-2, 5);
+                            yoffset = rnd.Next(0, 4);
                         }
                     }
                     
@@ -71,7 +71,7 @@ namespace MAPGEN
             return map;
         }
 
-        public static void RenderMap(int[,] map, Tilemap tilemap, TileBase tile)
+        public static void RenderMap(int[,] map, Tilemap tilemap, TileBase tile, TileBase ground)
         {
             //Clear the map (ensures we dont overlap)
             tilemap.ClearAllTiles();
@@ -87,8 +87,14 @@ namespace MAPGEN
                     if (map[x, y] == 1)
                     {
                         //Debug.Log(y +" "+ height);
+                        if (map[x, y + 1] == 0) {
+                            tilemap.SetTile(new Vector3Int(x, y - (height - 5), 0), ground);
+                        }
+                        else
+                        {
+                            tilemap.SetTile(new Vector3Int(x, y - (height - 5), 0), tile);
+                        }
                         
-                        tilemap.SetTile(new Vector3Int(x , y - (height), 0), tile);
                     }
                 }
             }

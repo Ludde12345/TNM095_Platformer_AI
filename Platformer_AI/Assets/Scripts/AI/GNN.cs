@@ -264,6 +264,15 @@ namespace GNN_AI
 
             if (won)
             {
+                /* Debug.Log("GEN: " + generation + " | AVG: " + averageFitness / (float)POPULATION_SIZE + " | MAX: " + maxFitness);
+                averageFitness = 0;
+                maxFitness = 0;
+                t.text = generation.ToString();
+
+                weightsList = weightsList.OrderByDescending(wi => wi.fitness).ToList();*/
+                crtIndex = 0;
+                generation++;
+
                 Debug.Log("GEN: " + generation + " | AVG: " + averageFitness / (float)POPULATION_SIZE + " | MAX: " + maxFitness);
                 averageFitness = 0;
                 maxFitness = 0;
@@ -271,6 +280,62 @@ namespace GNN_AI
 
                 weightsList = weightsList.OrderByDescending(wi => wi.fitness).ToList();
                 SaveFile();
+
+                // starting with a large mutation rate so there's will be more solutions to choose from
+                if (weightsList[0].fitness < 10)
+                    MUTATION_RATE = 0.9;
+                else
+                    MUTATION_RATE = 0.1;
+
+                int iterations = 0;
+                // creating a new generation 
+                while (nextWeightsList.Count < POPULATION_SIZE)
+                {
+                    iterations++;
+                    WeightsInfo w1 = select();
+                    WeightsInfo w2 = select();
+
+
+                    while (w1 == w2)
+                    {
+                        w1 = select();
+                        w2 = select();
+                    }
+
+                    List<double> gene1 = new List<double>();
+                    List<double> gene2 = new List<double>();
+
+                    encode(w1, gene1);
+                    encode(w2, gene2);
+
+
+                    crossover(gene1, gene2);
+
+                    if (mutate(gene1))
+                        w1 = new WeightsInfo();
+
+                    if (mutate(gene2))
+                        w2 = new WeightsInfo();
+
+                    decode(w1, gene1);
+                    decode(w2, gene2);
+
+                    if (!nextWeightsList.Contains(w1))
+                        nextWeightsList.Add(w1);
+
+                    if (!nextWeightsList.Contains(w2))
+                        nextWeightsList.Add(w2);
+                }
+
+
+                weightsList.Clear();
+                nextWeightsList = nextWeightsList.OrderByDescending(wi => wi.fitness).ToList();
+
+
+                weightsList.AddRange(nextWeightsList);
+
+                nextWeightsList.Clear();
+
                 return;
             }
 

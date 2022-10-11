@@ -15,6 +15,7 @@ using UnityEngine.UI;
 using System.IO;
 using System.Runtime.Serialization.Formatters.Binary;
 using System;
+using MAPGEN;
 
 namespace aicontroller
 {
@@ -22,7 +23,7 @@ namespace aicontroller
     {
         public bool useFile;
         public int timeScale;
-        const int checkTime = 20;
+        const int checkTime = 40;
         public GameObject player;
         public PlayerController playerController;
         public Vector3 bottomLeftCheck;
@@ -42,6 +43,8 @@ namespace aicontroller
         private float prev_x2 = 0;
         private double[,] current_tiles = new double[1, 558];
         private float prev_x = 0;
+        public TileBase tile;
+        public TileBase ground;
         //31 x 17
         private float targetTime = checkTime;
         // Start is called before the first frame update
@@ -57,8 +60,9 @@ namespace aicontroller
 
             bottomLeftCheck = camera.ViewportToWorldPoint(new Vector3(0, 0, camera.nearClipPlane));
 
-
-
+            
+            int[,] map = TileMapGen.GenerateArray(150, 20, false);
+            TileMapGen.RenderMap(map, tilemap,tile,ground);
             //area = cameraBounds.size;
 
 
@@ -123,7 +127,7 @@ namespace aicontroller
             //float targetTime = 1.0f;
 
             //if(targetTime <= 0.0f) {
-            if (player.transform.position.y < -2.5)
+            if (player.transform.position.y < -3)
             {
                 // print("Player dead");
                 playerController.dead = true;
@@ -188,17 +192,19 @@ namespace aicontroller
                 playerController.prevX = 0;
                 if (!useFile)
                 {
-
                     net.breedNetworks(genText, playerController.won);
+
                     if (playerController.won)
                     {
                         Time.timeScale = 1;
-                        useFile = true;
+                        
+                        //useFile = true;
+                        int[,] map = TileMapGen.GenerateArray(150, 20, false);
+                        TileMapGen.RenderMap(map, tilemap, tile, ground);
                     }
                 }
                 playerController.won = false;
                 playerController.dead = false;
-
                 return;
             }
 
