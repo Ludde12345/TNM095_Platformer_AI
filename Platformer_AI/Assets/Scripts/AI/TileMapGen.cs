@@ -32,7 +32,7 @@ namespace MAPGEN
             }
             
             foreach(bool a in empArr)
-                Debug.Log("bool " + a);
+                //Debug.Log("bool " + a);
 
             for (int x = 0; x < map.GetUpperBound(0); x++)
             {

@@ -132,7 +132,7 @@ namespace GNN_AI
                     LoadFile();
                 }
                 currWeightsinfo = fileWeights;
-                Debug.Log(fileWeights.fitness);
+               // Debug.Log(fileWeights.fitness);
 
 
 

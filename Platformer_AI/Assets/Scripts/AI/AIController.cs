@@ -30,6 +30,9 @@ namespace aicontroller
         public GameObject in_Nodes;
         public GameObject hidden_Nodes;
         public GameObject gen_Node;
+        public int wonGames;
+        public int lostGames;
+        public int duds;
         private TextMeshProUGUI inNodesText;
         private TextMeshProUGUI hiddenNodesText;
         private TextMeshProUGUI genText;
@@ -43,6 +46,7 @@ namespace aicontroller
         private float prev_x2 = 0;
         private double[,] current_tiles = new double[1, 558];
         private float prev_x = 0;
+        private bool notMoved;
         public TileBase tile;
         public TileBase ground;
         //31 x 17
@@ -119,6 +123,7 @@ namespace aicontroller
             //Time.timeScale = timeScale;
 
             PlatformerModel model = Simulation.GetModel<PlatformerModel>();
+            notMoved = false;
             //var playerController = model.player;
             //playerController.dead = true;
 
@@ -151,6 +156,7 @@ namespace aicontroller
 
                     //print("current_pos: " + player.transform.position.x + " prev_pos: " + playerController.prevX);
                     playerController.dead = true;
+                    notMoved = true;
 
                 }
                 else
@@ -202,6 +208,15 @@ namespace aicontroller
                         int[,] map = TileMapGen.GenerateArray(150, 20, false);
                         TileMapGen.RenderMap(map, tilemap, tile, ground);
                     }
+                }
+                else
+                {
+                    int[,] map = TileMapGen.GenerateArray(150, 20, false);
+                    TileMapGen.RenderMap(map, tilemap, tile, ground);
+                    lostGames += playerController.dead && !notMoved ? 1 : 0;
+                    duds += notMoved ? 1 : 0;
+                    wonGames += playerController.won ? 1 : 0;
+                    print("Duds: " + duds + "Wins: " + wonGames + " Total Games:" + (wonGames + lostGames + duds)  );
                 }
                 playerController.won = false;
                 playerController.dead = false;
